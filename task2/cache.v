@@ -1,5 +1,7 @@
 `include "defines.v"
 
+//one way; four sets
+//cache 63 bits; valid [62] 1 bit; tag [61:32] 30 bits; data [31:0] 4 bytes 
 module cache(
     
     input wire                 rst,
@@ -72,7 +74,7 @@ module cache(
             ram_ce_o <= `ChipDisable;
             mem_data_o <= `ZeroWord;
             ready <= 1'b1;
-        end else if (mem_ce_i == `ChipDisable) begin
+        end else if (mem_ce_i == `ChipDisable) begin  // write data from write_buffer if valid data exists to ram when chipdisable
             if (write_buffer[`ValidBit] == 1'b0) begin
                 ram_addr_o <= `ZeroWord;
                 ram_we_o <= `WriteDisable;
@@ -88,7 +90,7 @@ module cache(
                 ram_ce_o <= `ChipEnable;
                 write_buffer[`ValidBit] = `Invalid;
             end
-        end else if (hit == 1'b0) begin
+        end else if (hit == 1'b0) begin   // if not hit, send address to ram
                 ram_addr_o <= mem_addr_i;
                 ram_we_o <= `WriteDisable;
                 ram_sel_o <= 4'b1;
@@ -100,7 +102,7 @@ module cache(
             ram_sel_o <= 4'b0;
             ram_data_o <= `ZeroWord;
             ram_ce_o <= `ChipDisable;
-            if (mem_we_i == `WriteDisable) begin
+            if (mem_we_i == `WriteDisable) begin // load
                 case (set_select)
                     2'b00: begin
                         mem_data_o <= cache0[`DataStorage];
@@ -116,7 +118,7 @@ module cache(
                     end
                 endcase
                 ready <= 1'b1;
-            end else begin
+            end else begin                      // store
                 case (set_select)
                     2'b00: begin
                         if (mem_sel_i[3] == 1'b1) begin
@@ -187,7 +189,7 @@ module cache(
             cache1 <= `CacheNOP;
             cache2 <= `CacheNOP;
             cache3 <= `CacheNOP;
-        end else if (ready == 1'b0 && ram_data_ready == 1'b1) begin
+        end else if (ready == 1'b0 && ram_data_ready == 1'b1) begin  //if miss replace relate block
             case (set_select)
                 2'b00: begin
                     if (cache0[`ValidBit] == 1'b1) begin
